@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+var page = config{Next: "https://pokeapi.co/api/v2/location-area/"}
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -24,7 +26,11 @@ func main() {
 			fmt.Println("Unknown command")
 			continue
 		} else {
-			command()
+			err := command(&page)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 		}
 		// fmt.Println("Your command was:", cleanedInput[0])
 	}
