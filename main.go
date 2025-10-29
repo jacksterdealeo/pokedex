@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var page = config{Next: "https://pokeapi.co/api/v2/location-area/"}
+var page = config{Next: "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20"}
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)

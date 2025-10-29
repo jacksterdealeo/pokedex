@@ -7,7 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/jacksterdealeo/pokedex/internal/pokecache"
 )
+
+var cache = pokecache.NewCache(time.Duration(time.Second) * 30)
 
 // contains the Next and Previous URLs needed to paginate through location areas.
 // When getting Next and Previous values, PokeAPI returns URLs to pages 20 entries long by default.
@@ -76,22 +81,29 @@ func commandMap(config *config) error {
 	if config.Next == "" {
 		return fmt.Errorf("There is no next map")
 	}
-	res, err := http.Get(config.Next)
-	if err != nil {
-		return err
-	}
 
-	body, err := io.ReadAll(res.Body)
-	res.Body.Close()
-	if res.StatusCode > 299 {
-		return fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+	var body []byte
+	if data, found := cache.Get(config.Next); found {
+		body = data
+	} else {
+		res, err := http.Get(config.Next)
+		if err != nil {
+			return err
+		}
+
+		body, err = io.ReadAll(res.Body)
+		res.Body.Close()
+		if res.StatusCode > 299 {
+			return fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		}
+		if err != nil {
+			return err
+		}
+		cache.Add(config.Next, body)
 	}
+	err := json.Unmarshal(body, config)
 	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(body, config)
-	if err != nil {
-		log.Fatalf("Couldn't Unmarshal json body, %v", err)
+		log.Fatalf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
 	}
 
 	for _, result := range config.Results {
@@ -104,20 +116,27 @@ func commandMapBack(config *config) error {
 	if config.Previous == "" {
 		return fmt.Errorf("There is no previous map")
 	}
-	res, err := http.Get(config.Previous)
-	if err != nil {
-		return err
-	}
 
-	body, err := io.ReadAll(res.Body)
-	res.Body.Close()
-	if res.StatusCode > 299 {
-		return fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+	var body []byte
+	if data, found := cache.Get(config.Previous); found {
+		body = data
+	} else {
+		res, err := http.Get(config.Previous)
+		if err != nil {
+			return err
+		}
+
+		body, err = io.ReadAll(res.Body)
+		res.Body.Close()
+		if res.StatusCode > 299 {
+			return fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		}
+		if err != nil {
+			return err
+		}
+		cache.Add(config.Previous, body)
 	}
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(body, config)
+	err := json.Unmarshal(body, config)
 	if err != nil {
 		log.Fatalf("Couldn't Unmarshal json body, %v", err)
 	}
