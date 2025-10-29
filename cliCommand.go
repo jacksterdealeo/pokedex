@@ -3,12 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
+	"github.com/jacksterdealeo/pokedex/internal/api"
 	"github.com/jacksterdealeo/pokedex/internal/pokecache"
 )
 
@@ -83,25 +82,17 @@ func commandMap(config *config) error {
 	}
 
 	var body []byte
+	var err error
 	if data, found := cache.Get(config.Next); found {
 		body = data
 	} else {
-		res, err := http.Get(config.Next)
-		if err != nil {
-			return err
-		}
-
-		body, err = io.ReadAll(res.Body)
-		res.Body.Close()
-		if res.StatusCode > 299 {
-			return fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-		}
+		body, err = api.GetResponseBody(config.Next)
 		if err != nil {
 			return err
 		}
 		cache.Add(config.Next, body)
 	}
-	err := json.Unmarshal(body, config)
+	err = json.Unmarshal(body, config)
 	if err != nil {
 		log.Fatalf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
 	}
@@ -118,25 +109,17 @@ func commandMapBack(config *config) error {
 	}
 
 	var body []byte
+	var err error
 	if data, found := cache.Get(config.Previous); found {
 		body = data
 	} else {
-		res, err := http.Get(config.Previous)
-		if err != nil {
-			return err
-		}
-
-		body, err = io.ReadAll(res.Body)
-		res.Body.Close()
-		if res.StatusCode > 299 {
-			return fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-		}
+		body, err = api.GetResponseBody(config.Previous)
 		if err != nil {
 			return err
 		}
 		cache.Add(config.Previous, body)
 	}
-	err := json.Unmarshal(body, config)
+	err = json.Unmarshal(body, config)
 	if err != nil {
 		log.Fatalf("Couldn't Unmarshal json body, %v", err)
 	}
