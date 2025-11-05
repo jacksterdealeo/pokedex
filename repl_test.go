@@ -4,25 +4,25 @@ import (
 	"testing"
 )
 
-var cases = []struct {
-	input    string
-	expected []string
-}{
-	{
-		input:    " ",
-		expected: []string{},
-	},
-	{
-		"red",
-		[]string{"red"},
-	},
-	{
-		"sMoThEr it With JAM ",
-		[]string{"smother", "it", "with", "jam"},
-	},
-}
-
 func TestCases(t *testing.T) {
+	var cases = []struct {
+		input    string
+		expected []string
+	}{
+		{
+			input:    " ",
+			expected: []string{},
+		},
+		{
+			"red",
+			[]string{"red"},
+		},
+		{
+			"sMoThEr it With JAM ",
+			[]string{"smother", "it", "with", "jam"},
+		},
+	}
+
 	for _, c := range cases {
 		actual := cleanInput(c.input)
 
