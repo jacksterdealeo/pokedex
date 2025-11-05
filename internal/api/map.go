@@ -28,7 +28,7 @@ func GetMapAPIResponse(url string) ([]byte, error) {
 	body, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if res.StatusCode > 299 {
-		return []byte{}, fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		return []byte{}, fmt.Errorf("Response failed with status code: %d\nbody: %s\n", res.StatusCode, body)
 	}
 	if err != nil {
 		return []byte{}, err

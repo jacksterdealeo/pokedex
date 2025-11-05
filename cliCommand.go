@@ -26,8 +26,9 @@ func cliCommands() map[string]cliCommand {
 			callback:    commandExit,
 		},
 		"explore": {
+			// TODO: MAKE THIS
 			name:        "explore",
-			description: "Shows all the pokemon in an area",
+			description: "TODO: Shows all the pokemon in an area",
 			callback:    commandExplore,
 		},
 		"help": {
@@ -60,7 +61,33 @@ func commandExit(_ *Config) error {
 }
 
 func commandExplore(config *Config) error {
-	// TODO
+	// TODO: MAKE THIS
+	var body []byte
+	var err error
+	if len(config.Parameter) == 0 {
+		return fmt.Errorf("no parameter for exploration")
+	}
+	endpoint := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", config.Parameter)
+	if data, found := cache.Get(endpoint); found {
+		body = data
+	} else {
+		body, err = api.GetAPIResponse(endpoint)
+		if err != nil {
+			return err
+		}
+		cache.Add(endpoint, body)
+	}
+
+	var response api.ExploreResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return fmt.Errorf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
+	}
+
+	for _, result := range response.PokemonEncounters {
+		fmt.Println(result.Pokemon.Name)
+	}
+
 	return nil
 }
 
