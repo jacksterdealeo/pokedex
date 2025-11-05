@@ -12,18 +12,6 @@ import (
 
 var cache = pokecache.NewCache(time.Duration(time.Second) * 30)
 
-// contains the Next and Previous URLs needed to paginate through location areas.
-// When getting Next and Previous values, PokeAPI returns URLs to pages 20 entries long by default.
-type PokeAPIResponse struct {
-	Count    int    `json:"count"`
-	Next     string `json:"next"`
-	Previous string `json:"previous"`
-	Results  []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"results"`
-}
-
 type cliCommand struct {
 	name        string
 	description string
@@ -37,10 +25,10 @@ func cliCommands() map[string]cliCommand {
 			description: "Exits the Pokedex",
 			callback:    commandExit,
 		},
-		"quit": {
-			name:        "quit",
-			description: "An alias for exit",
-			callback:    commandExit,
+		"explore": {
+			name:        "explore",
+			description: "Shows all the pokemon in an area",
+			callback:    commandExplore,
 		},
 		"help": {
 			name:        "help",
@@ -49,13 +37,18 @@ func cliCommands() map[string]cliCommand {
 		},
 		"map": {
 			name:        "map",
-			description: "",
+			description: "Shows the next area",
 			callback:    commandMap,
 		},
 		"mapb": {
 			name:        "mapb",
-			description: "",
+			description: "Shows the previous area",
 			callback:    commandMapBack,
+		},
+		"quit": {
+			name:        "quit",
+			description: "Does the same as 'exit'",
+			callback:    commandExit,
 		},
 	}
 }
@@ -63,6 +56,11 @@ func cliCommands() map[string]cliCommand {
 func commandExit(_ *Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
+	return nil
+}
+
+func commandExplore(config *Config) error {
+	// TODO
 	return nil
 }
 
@@ -81,14 +79,14 @@ func commandMap(config *Config) error {
 	if data, found := cache.Get(config.Next); found {
 		body = data
 	} else {
-		body, err = api.GetPokeAPIResponse(config.Next)
+		body, err = api.GetAPIResponse(config.Next)
 		if err != nil {
 			return err
 		}
 		cache.Add(config.Next, body)
 	}
 
-	var response PokeAPIResponse
+	var response api.MapResponse
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return fmt.Errorf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
@@ -99,6 +97,7 @@ func commandMap(config *Config) error {
 	}
 
 	config.Previous = response.Previous
+	config.Current = config.Next
 	config.Next = response.Next
 	return nil
 }
@@ -113,14 +112,14 @@ func commandMapBack(config *Config) error {
 	if data, found := cache.Get(config.Previous); found {
 		body = data
 	} else {
-		body, err = api.GetPokeAPIResponse(config.Previous)
+		body, err = api.GetAPIResponse(config.Previous)
 		if err != nil {
 			return err
 		}
 		cache.Add(config.Previous, body)
 	}
 
-	var response PokeAPIResponse
+	var response api.MapResponse
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return fmt.Errorf("Couldn't Unmarshal json body, %v", err)
@@ -130,6 +129,7 @@ func commandMapBack(config *Config) error {
 		fmt.Println(result.Name)
 	}
 
+	config.Current = config.Previous
 	config.Previous = response.Previous
 	config.Next = response.Next
 	return nil
