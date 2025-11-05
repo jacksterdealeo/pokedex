@@ -6,9 +6,8 @@ import (
 	"os"
 )
 
-var page = config{Next: "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20"}
-
 func main() {
+	config := NewConfig()
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Pokedex > ")
@@ -26,7 +25,7 @@ func main() {
 			fmt.Println("Unknown command")
 			continue
 		} else {
-			err := command(&page)
+			err := command(config)
 			if err != nil {
 				fmt.Println(err)
 				continue

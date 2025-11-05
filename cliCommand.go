@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -15,7 +14,7 @@ var cache = pokecache.NewCache(time.Duration(time.Second) * 30)
 
 // contains the Next and Previous URLs needed to paginate through location areas.
 // When getting Next and Previous values, PokeAPI returns URLs to pages 20 entries long by default.
-type config struct {
+type PokeAPIResponse struct {
 	Count    int    `json:"count"`
 	Next     string `json:"next"`
 	Previous string `json:"previous"`
@@ -28,7 +27,7 @@ type config struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(config *config) error
+	callback    func(config *Config) error
 }
 
 func cliCommands() map[string]cliCommand {
@@ -36,6 +35,11 @@ func cliCommands() map[string]cliCommand {
 		"exit": {
 			name:        "exit",
 			description: "Exits the Pokedex",
+			callback:    commandExit,
+		},
+		"quit": {
+			name:        "quit",
+			description: "An alias for exit",
 			callback:    commandExit,
 		},
 		"help": {
@@ -53,21 +57,16 @@ func cliCommands() map[string]cliCommand {
 			description: "",
 			callback:    commandMapBack,
 		},
-		"quit": {
-			name:        "quit",
-			description: "An alias for exit",
-			callback:    commandExit,
-		},
 	}
 }
 
-func commandExit(_ *config) error {
+func commandExit(_ *Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(_ *config) error {
+func commandHelp(_ *Config) error {
 	fmt.Println(`Welcome to the Pokedex!
 Usage:`)
 	for _, value := range cliCommands() {
@@ -76,34 +75,35 @@ Usage:`)
 	return nil
 }
 
-func commandMap(config *config) error {
-	if config.Next == "" {
-		return fmt.Errorf("There is no next map")
-	}
-
+func commandMap(config *Config) error {
 	var body []byte
 	var err error
 	if data, found := cache.Get(config.Next); found {
 		body = data
 	} else {
-		body, err = api.GetResponseBody(config.Next)
+		body, err = api.GetPokeAPIResponse(config.Next)
 		if err != nil {
 			return err
 		}
 		cache.Add(config.Next, body)
 	}
-	err = json.Unmarshal(body, config)
+
+	var response PokeAPIResponse
+	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Fatalf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
+		return fmt.Errorf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
 	}
 
-	for _, result := range config.Results {
+	for _, result := range response.Results {
 		fmt.Println(result.Name)
 	}
+
+	config.Previous = response.Previous
+	config.Next = response.Next
 	return nil
 }
 
-func commandMapBack(config *config) error {
+func commandMapBack(config *Config) error {
 	if config.Previous == "" {
 		return fmt.Errorf("There is no previous map")
 	}
@@ -113,19 +113,24 @@ func commandMapBack(config *config) error {
 	if data, found := cache.Get(config.Previous); found {
 		body = data
 	} else {
-		body, err = api.GetResponseBody(config.Previous)
+		body, err = api.GetPokeAPIResponse(config.Previous)
 		if err != nil {
 			return err
 		}
 		cache.Add(config.Previous, body)
 	}
-	err = json.Unmarshal(body, config)
+
+	var response PokeAPIResponse
+	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Fatalf("Couldn't Unmarshal json body, %v", err)
+		return fmt.Errorf("Couldn't Unmarshal json body, %v", err)
 	}
 
-	for _, result := range config.Results {
+	for _, result := range response.Results {
 		fmt.Println(result.Name)
 	}
+
+	config.Previous = response.Previous
+	config.Next = response.Next
 	return nil
 }
