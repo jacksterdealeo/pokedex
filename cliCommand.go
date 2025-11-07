@@ -67,7 +67,6 @@ func commandExplore(config *Config) error {
 	if err != nil {
 		return err
 	}
-	config.Cache.Add(endpoint, body)
 
 	var response api.ExploreResponse
 	err = json.Unmarshal(body, &response)
@@ -98,7 +97,6 @@ func commandMap(config *Config) error {
 	if err != nil {
 		return err
 	}
-	config.Cache.Add(config.Next, body)
 
 	var response api.MapResponse
 	err = json.Unmarshal(body, &response)
@@ -127,7 +125,6 @@ func commandMapBack(config *Config) error {
 	if err != nil {
 		return err
 	}
-	config.Cache.Add(config.Previous, body)
 
 	var response api.MapResponse
 	err = json.Unmarshal(body, &response)

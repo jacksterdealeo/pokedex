@@ -26,5 +26,6 @@ func GetAPIResponse(url string, cache *pokecache.Cache) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+	cache.Add(url, body)
 	return body, nil
 }
