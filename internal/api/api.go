@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/jacksterdealeo/pokedex/internal/pokecache"
 )
 
-func GetAPIResponse(url string) ([]byte, error) {
+func GetAPIResponse(url string, cache *pokecache.Cache) ([]byte, error) {
+	if data, found := cache.Get(url); found {
+		return data, nil
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
 		return []byte{}, err

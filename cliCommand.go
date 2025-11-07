@@ -4,13 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/jacksterdealeo/pokedex/internal/api"
-	"github.com/jacksterdealeo/pokedex/internal/pokecache"
 )
-
-var cache = pokecache.NewCache(time.Duration(time.Second) * 30)
 
 type cliCommand struct {
 	name        string
@@ -26,7 +22,6 @@ func cliCommands() map[string]cliCommand {
 			callback:    commandExit,
 		},
 		"explore": {
-			// TODO: MAKE THIS
 			name:        "explore",
 			description: "TODO: Shows all the pokemon in an area",
 			callback:    commandExplore,
@@ -61,22 +56,18 @@ func commandExit(_ *Config) error {
 }
 
 func commandExplore(config *Config) error {
-	// TODO: MAKE THIS
 	var body []byte
 	var err error
 	if len(config.Parameter) == 0 {
 		return fmt.Errorf("no parameter for exploration")
 	}
 	endpoint := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", config.Parameter)
-	if data, found := cache.Get(endpoint); found {
-		body = data
-	} else {
-		body, err = api.GetAPIResponse(endpoint)
-		if err != nil {
-			return err
-		}
-		cache.Add(endpoint, body)
+
+	body, err = api.GetAPIResponse(endpoint, config.Cache)
+	if err != nil {
+		return err
 	}
+	config.Cache.Add(endpoint, body)
 
 	var response api.ExploreResponse
 	err = json.Unmarshal(body, &response)
@@ -103,15 +94,11 @@ Usage:`)
 func commandMap(config *Config) error {
 	var body []byte
 	var err error
-	if data, found := cache.Get(config.Next); found {
-		body = data
-	} else {
-		body, err = api.GetAPIResponse(config.Next)
-		if err != nil {
-			return err
-		}
-		cache.Add(config.Next, body)
+	body, err = api.GetAPIResponse(config.Next, config.Cache)
+	if err != nil {
+		return err
 	}
+	config.Cache.Add(config.Next, body)
 
 	var response api.MapResponse
 	err = json.Unmarshal(body, &response)
@@ -136,15 +123,11 @@ func commandMapBack(config *Config) error {
 
 	var body []byte
 	var err error
-	if data, found := cache.Get(config.Previous); found {
-		body = data
-	} else {
-		body, err = api.GetAPIResponse(config.Previous)
-		if err != nil {
-			return err
-		}
-		cache.Add(config.Previous, body)
+	body, err = api.GetAPIResponse(config.Previous, config.Cache)
+	if err != nil {
+		return err
 	}
+	config.Cache.Add(config.Previous, body)
 
 	var response api.MapResponse
 	err = json.Unmarshal(body, &response)
