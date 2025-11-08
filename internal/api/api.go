@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/jacksterdealeo/pokedex/internal/pokecache"
+	"github.com/jacksterdealeo/pokedex/internal/cache"
 )
 
-func GetAPIResponse(url string, cache *pokecache.Cache) ([]byte, error) {
+func GetAPIResponse(url string, cache *cache.Cache) ([]byte, error) {
 	if data, found := cache.Get(url); found {
 		return data, nil
 	}
