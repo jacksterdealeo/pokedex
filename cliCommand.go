@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"os"
 
 	"github.com/jacksterdealeo/pokedex/internal/api"
@@ -16,6 +17,11 @@ type cliCommand struct {
 
 func cliCommands() map[string]cliCommand {
 	return map[string]cliCommand{
+		"catch": {
+			name:        "catch",
+			description: "TODO: Attempts to catch a Pokemon",
+			callback:    commandCatch,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exits the Pokedex",
@@ -23,7 +29,7 @@ func cliCommands() map[string]cliCommand {
 		},
 		"explore": {
 			name:        "explore",
-			description: "TODO: Shows all the pokemon in an area",
+			description: "Shows all the pokemon in an area",
 			callback:    commandExplore,
 		},
 		"help": {
@@ -47,6 +53,40 @@ func cliCommands() map[string]cliCommand {
 			callback:    commandExit,
 		},
 	}
+}
+
+func commandCatch(config *Config) error {
+	var body []byte
+	var err error
+	if len(config.Parameter) == 0 {
+		return fmt.Errorf("no parameter for catching")
+	}
+	endpoint := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", config.Parameter)
+
+	body, err = api.GetAPIResponse(endpoint, config.Cache)
+	if err != nil {
+		return err
+	}
+
+	var response api.PokemonResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return fmt.Errorf("Couldn't Unmarshal json body\nerr: %v\njson: %v", err, body)
+	}
+
+	caughtChance := rand.IntN(response.BaseExperience+250) - response.BaseExperience
+	caught := caughtChance > 0
+
+	fmt.Printf("Throwing a Pokeball at %v...\n", config.Parameter)
+	//fmt.Println("Debug ~ Rand Chance:", caughtChance, "exp:", response.BaseExperience)
+	if caught {
+		fmt.Println(config.Parameter, "was caught!")
+		config.CaughtPokemon[config.Parameter] = response
+	} else {
+		fmt.Println(config.Parameter, "escaped!")
+	}
+
+	return nil
 }
 
 func commandExit(_ *Config) error {
