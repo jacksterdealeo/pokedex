@@ -37,6 +37,11 @@ func cliCommands() map[string]cliCommand {
 			description: "Displays a help message",
 			callback:    commandHelp,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Displays the name, height, weight, stats and type(s) of the Pokemon.",
+			callback:    commandInspect,
+		},
 		"map": {
 			name:        "map",
 			description: "Shows the next area",
@@ -151,6 +156,26 @@ func commandMap(config *Config) error {
 	config.Previous = response.Previous
 	config.Current = config.Next
 	config.Next = response.Next
+	return nil
+}
+
+func commandInspect(config *Config) error {
+	pokemon, exists := config.CaughtPokemon[config.Parameter]
+	if !exists {
+		return fmt.Errorf("you have not caught that pokemon\n")
+	}
+	fmt.Printf(`Name: %v
+Height: %v
+Weight: %v
+Stats:
+`, pokemon.Name, pokemon.Height, pokemon.Weight)
+	for _, e := range pokemon.Stats {
+		fmt.Printf("  - %v: %v\n", e.Stat.Name, e.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, e := range pokemon.Types {
+		fmt.Printf("  - %v\n", e.Type.Name)
+	}
 	return nil
 }
 
