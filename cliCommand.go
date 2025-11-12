@@ -19,7 +19,7 @@ func cliCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"catch": {
 			name:        "catch",
-			description: "TODO: Attempts to catch a Pokemon",
+			description: "Attempts to catch a Pokemon",
 			callback:    commandCatch,
 		},
 		"exit": {
@@ -51,6 +51,12 @@ func cliCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Shows the previous area",
 			callback:    commandMapBack,
+		},
+
+		"pokedex": {
+			name:        "pokedex",
+			description: "Displays a list of all the names of the Pokemon the user has caught.",
+			callback:    commandPokedex,
 		},
 		"quit": {
 			name:        "quit",
@@ -204,5 +210,17 @@ func commandMapBack(config *Config) error {
 	config.Current = config.Previous
 	config.Previous = response.Previous
 	config.Next = response.Next
+	return nil
+}
+
+func commandPokedex(config *Config) error {
+	if len(config.CaughtPokemon) == 0 {
+		fmt.Println("You have no Pokemon.")
+		return nil
+	}
+	fmt.Println("Your Pokedex:")
+	for key, _ := range config.CaughtPokemon {
+		fmt.Println(" -", key)
+	}
 	return nil
 }
